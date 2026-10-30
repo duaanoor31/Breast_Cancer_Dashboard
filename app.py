@@ -92,20 +92,19 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
       :root { --ink: #172d42; --muted: #68798b; --pink: #c94f70; --teal: #168b78; }
-      html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
+      html, body, [class*="css"] { font-family: Inter, 'Segoe UI', sans-serif; }
       [data-testid="stAppViewContainer"] { background: #f4f7fa; }
       [data-testid="stHeader"] { background: rgba(244,247,250,.86); }
       [data-testid="stSidebar"] { background: #fbfcfd; border-right: 1px solid #e5ebf0; }
       [data-testid="stSidebar"] > div:first-child { padding-top: 1.25rem; }
       .block-container { max-width: 1480px; padding: 1.7rem 2.4rem 3.2rem; }
-      h1, h2, h3 { color: var(--ink); font-family: 'Manrope', sans-serif; letter-spacing: -.035em; }
+      h1, h2, h3 { color: var(--ink); font-family: Inter, 'Segoe UI', sans-serif; letter-spacing: -.035em; }
       h1 { font-weight: 800; }
       p, li { color: #526579; }
       [data-testid="stMetric"] { background: #fff; border: 1px solid #e7edf2; border-radius: 16px; padding: 1rem 1.1rem; box-shadow: 0 4px 16px rgba(25,48,69,.035); }
       [data-testid="stMetricLabel"] { color: #718194; font-size: .82rem; font-weight: 600; }
-      [data-testid="stMetricValue"] { color: #183149; font-family: 'Manrope', sans-serif; font-size: 1.8rem; font-weight: 800; }
+      [data-testid="stMetricValue"] { color: #183149; font-family: Inter, 'Segoe UI', sans-serif; font-size: 1.8rem; font-weight: 800; }
       div[data-testid="stTabs"] button { font-weight: 600; }
       div[data-testid="stTabs"] button[aria-selected="true"] { color: #bf4668; }
       .hero { background: linear-gradient(118deg, #19374d 0%, #24465d 57%, #365064 100%); border-radius: 22px; padding: 1.65rem 2rem; color: #fff; margin: .25rem 0 1.3rem; box-shadow: 0 12px 32px rgba(28,55,76,.15); position: relative; overflow: hidden; }
@@ -191,7 +190,7 @@ def make_chart(fig, height: int = 360):
         template="plotly_white",
         height=height,
         margin=dict(l=16, r=16, t=28, b=16),
-        font=dict(family="DM Sans, sans-serif", color="#40566b", size=12),
+        font=dict(family="Inter, Segoe UI, sans-serif", color="#40566b", size=12),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         legend_title_text="",
@@ -214,7 +213,10 @@ def format_number(value, digits: int = 1) -> str:
 st.sidebar.markdown("### ✳ Cohort controls")
 st.sidebar.caption("Use the filters to explore a subset of records. Every view below updates together.")
 if st.sidebar.button("Reset filters", use_container_width=True):
-    for key in ["f_age", "f_tumor", "f_status", "f_stage", "f_race", "f_er", "f_pr"]:
+    for key in [
+        "f_age", "f_tumor", "f_status", "f_stage", "f_race", "f_er", "f_pr",
+        "f_t", "f_n", "f_summary", "f_grade", "f_diff", "f_marital",
+    ]:
         st.session_state.pop(key, None)
     st.rerun()
 
@@ -260,6 +262,20 @@ selected_race = st.sidebar.multiselect("Race", race_options, default=race_option
 selected_er = st.sidebar.multiselect("Estrogen receptor", er_options, default=er_options, key="f_er")
 selected_pr = st.sidebar.multiselect("Progesterone receptor", pr_options, default=pr_options, key="f_pr")
 
+with st.sidebar.expander("More clinical & demographic filters"):
+    t_options = sorted(data["t_stage"].dropna().unique().tolist())
+    n_options = sorted(data["n_stage"].dropna().unique().tolist())
+    summary_options = sorted(data["a_stage"].dropna().unique().tolist())
+    grade_options = sorted(data["grade"].dropna().unique().tolist())
+    diff_options = sorted(data["differentiate"].dropna().unique().tolist())
+    marital_options = sorted(data["marital_status"].dropna().unique().tolist())
+    selected_t = st.multiselect("T stage", t_options, default=t_options, key="f_t")
+    selected_n = st.multiselect("N stage", n_options, default=n_options, key="f_n")
+    selected_summary = st.multiselect("Summary stage", summary_options, default=summary_options, key="f_summary")
+    selected_grade = st.multiselect("Grade", grade_options, default=grade_options, key="f_grade")
+    selected_diff = st.multiselect("Differentiation", diff_options, default=diff_options, key="f_diff")
+    selected_marital = st.multiselect("Marital status", marital_options, default=marital_options, key="f_marital")
+
 filtered = data[
     data["age"].between(*age_range)
     & data["tumor_size"].between(*tumor_range)
@@ -268,6 +284,12 @@ filtered = data[
     & data["race"].isin(selected_race)
     & data["estrogen_status"].isin(selected_er)
     & data["progesterone_status"].isin(selected_pr)
+    & data["t_stage"].isin(selected_t)
+    & data["n_stage"].isin(selected_n)
+    & data["a_stage"].isin(selected_summary)
+    & data["grade"].isin(selected_grade)
+    & data["differentiate"].isin(selected_diff)
+    & data["marital_status"].isin(selected_marital)
 ].copy()
 
 st.markdown(
