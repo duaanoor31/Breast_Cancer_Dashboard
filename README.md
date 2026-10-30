@@ -29,7 +29,7 @@ If `uv` is not installed, create the environment with `python -m venv .venv`, th
 - **Demographics:** age, race, and marital-status distributions.
 - **Records & quality:** filtered source fields, missing-cell count, field guide, and CSV export.
 
-The sidebar filters age, tumor size, vital status, sixth-edition stage, race, and both receptor fields. Upload a CSV with the notebook's 16 fields to explore another copy of the cohort.
+The sidebar filters age, tumor size, vital status, sixth-edition stage, race, and both receptor fields. Expand **More clinical & demographic filters** for T/N/summary stage, grade, differentiation, and marital status. Upload a CSV with the notebook's 16 fields to explore another copy of the cohort.
 
 ## Data and interpretation
 
