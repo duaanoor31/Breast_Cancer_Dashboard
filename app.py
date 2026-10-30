@@ -355,6 +355,12 @@ with overview_tab:
         fig.update_traces(texttemplate="%{text:,}", textposition="outside", cliponaxis=False)
         fig.update_layout(showlegend=False, yaxis=dict(categoryorder="array", categoryarray=sorted_stages(filtered["sixth_stage"]), autorange="reversed"))
         st.plotly_chart(make_chart(fig, 360), use_container_width=True)
+        if not stage_counts.empty:
+            leading_stage = stage_counts.loc[stage_counts["Records"].idxmax()]
+            st.markdown(
+                f'<div class="insight"><b>{leading_stage["6th stage"]}</b> is the largest stage group in this view: {int(leading_stage["Records"]):,} records ({leading_stage["Records"] / total:.1%}).</div>',
+                unsafe_allow_html=True,
+            )
         st.markdown('<div class="muted-note">Stage categories follow the sixth-edition stage field provided by the notebook.</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="section-label">Distribution</div>', unsafe_allow_html=True)
@@ -401,6 +407,22 @@ with tumor_tab:
     fig.update_yaxes(tickformat=".0%")
     st.plotly_chart(make_chart(fig, 370), use_container_width=True)
 
+    st.subheader("Numeric feature correlations")
+    correlation_fields = ["age", "tumor_size", "regional_node_examined", "regional_node_positive", "survival_months"]
+    correlation = filtered[correlation_fields].corr().rename(index=display_label, columns=display_label)
+    fig = px.imshow(
+        correlation,
+        text_auto=".2f",
+        color_continuous_scale="RdBu_r",
+        zmin=-1,
+        zmax=1,
+        aspect="auto",
+        labels={"x": "Feature", "y": "Feature", "color": "Pearson r"},
+    )
+    fig.update_layout(coloraxis_colorbar=dict(title="Pearson r"))
+    st.plotly_chart(make_chart(fig, 440), use_container_width=True)
+    st.caption("Pearson correlations are descriptive and unadjusted. Survival-month correlations include records whose follow-up may be censored.")
+
 with outcome_tab:
     st.markdown('<div class="section-label">Recorded outcome & receptors</div>', unsafe_allow_html=True)
     st.subheader("Observed follow-up and receptor status")
@@ -429,6 +451,20 @@ with outcome_tab:
     fig.update_yaxes(tickformat=".0%")
     fig.update_traces(texttemplate="n=%{text:,}", textposition="outside", cliponaxis=False)
     st.plotly_chart(make_chart(fig, 380), use_container_width=True)
+    if set(selected_status) == {"Alive", "Dead"}:
+        insight_cols = st.columns(2)
+        for column, (field, title) in zip(insight_cols, receptor_fields):
+            grouped = filtered.groupby(field)["status"].agg(
+                records="size", dead=lambda values: (values == "Dead").sum()
+            )
+            shares = (grouped["dead"] / grouped["records"]).dropna()
+            if "Negative" in shares.index and "Positive" in shares.index:
+                difference = (shares["Negative"] - shares["Positive"]) * 100
+                with column:
+                    st.markdown(
+                        f'<div class="insight"><b>{title}:</b> {shares["Negative"]:.1%} of negative records and {shares["Positive"]:.1%} of positive records are marked Dead in the source ({difference:+.1f} percentage points; unadjusted).</div>',
+                        unsafe_allow_html=True,
+                    )
     st.caption("Shares are computed within each receptor group in the selected cohort. They are unadjusted associations, not treatment effects.")
 
 with people_tab:
