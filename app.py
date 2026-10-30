@@ -426,7 +426,7 @@ with tumor_tab:
 with outcome_tab:
     st.markdown('<div class="section-label">Recorded outcome & receptors</div>', unsafe_allow_html=True)
     st.subheader("Observed follow-up and receptor status")
-    st.info("Survival Months is a recorded duration. Records marked Alive may be right-censored at last follow-up, so these charts are not Kaplan–Meier estimates or individual survival predictions.")
+    st.info("Survival Months is a recorded duration. Records marked Alive may be right-censored at last follow-up, so these charts are not Kaplan-Meier estimates or individual survival predictions.")
 
     col_e, col_f = st.columns(2, gap="large")
     with col_e:
@@ -441,7 +441,10 @@ with outcome_tab:
     receptor_fields = [("estrogen_status", "Estrogen receptor"), ("progesterone_status", "Progesterone receptor")]
     receptor_data = []
     for field, title in receptor_fields:
-        group = filtered.groupby(field, dropna=False)["status"].agg(records="size", dead=lambda values: (values == "Dead").sum()).reset_index()
+        group = filtered.groupby(field, dropna=False).agg(
+            records=("status", "size"),
+            dead=("status", lambda values: (values == "Dead").sum()),
+        ).reset_index()
         group["Observed dead share"] = group["dead"] / group["records"]
         group["Receptor"] = title
         group = group.rename(columns={field: "Result"})
@@ -454,8 +457,9 @@ with outcome_tab:
     if set(selected_status) == {"Alive", "Dead"}:
         insight_cols = st.columns(2)
         for column, (field, title) in zip(insight_cols, receptor_fields):
-            grouped = filtered.groupby(field)["status"].agg(
-                records="size", dead=lambda values: (values == "Dead").sum()
+            grouped = filtered.groupby(field).agg(
+                records=("status", "size"),
+                dead=("status", lambda values: (values == "Dead").sum()),
             )
             shares = (grouped["dead"] / grouped["records"]).dropna()
             if "Negative" in shares.index and "Positive" in shares.index:
