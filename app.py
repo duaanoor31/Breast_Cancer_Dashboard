@@ -340,9 +340,13 @@ with overview_tab:
             hole=.66,
             color="Status",
             color_discrete_map=STATUS_COLORS,
-            hover_data={"Records": ":,", "Status": True},
         )
-        fig.update_traces(textposition="outside", texttemplate="%{label}<br>%{percent}", showlegend=False)
+        fig.update_traces(
+            textposition="outside",
+            texttemplate="%{label}<br>%{percent}",
+            hovertemplate="<b>%{label}</b><br>Records: %{value:,.0f}<br>Share: %{percent}<extra></extra>",
+            showlegend=False,
+        )
         fig.add_annotation(text=f"{total:,}<br><span style='font-size:11px'>records</span>", x=.5, y=.5, showarrow=False, font=dict(size=19, color="#19374d"))
         st.plotly_chart(make_chart(fig, 325), use_container_width=True)
         st.markdown(
